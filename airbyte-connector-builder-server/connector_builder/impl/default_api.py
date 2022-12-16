@@ -27,7 +27,8 @@ from jsonschema import ValidationError
 class DefaultApiImpl(DefaultApi):
     logger = logging.getLogger("airbyte.connector-builder")
 
-    def __init__(self, max_record_limit: int = 1000):
+    def __init__(self, adapter_cls: Type, max_record_limit: int = 1000):
+        self.adapter_cls = adapter_cls
         self.max_record_limit = max_record_limit
         super().__init__()
 
@@ -212,10 +213,9 @@ spec:
             self.logger.warning(f"Failed to parse log message into response object with error: {error}")
             return None
 
-    @staticmethod
-    def _create_low_code_adapter(manifest: Dict[str, Any]) -> LowCodeSourceAdapter:
+    def _create_low_code_adapter(self, manifest: Dict[str, Any]) -> LowCodeSourceAdapter:
         try:
-            return LowCodeSourceAdapter(manifest=manifest)
+            return self.adapter_cls(manifest=manifest)
         except ValidationError as error:
             # TODO: We're temporarily using FastAPI's default exception model. Ideally we should use exceptions defined in the OpenAPI spec
             raise HTTPException(status_code=400, detail=f"Invalid connector manifest with error: {error.message}")
