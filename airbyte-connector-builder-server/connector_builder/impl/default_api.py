@@ -5,7 +5,7 @@
 import json
 import logging
 from json import JSONDecodeError
-from typing import Any, Dict, Iterable, Optional, Union
+from typing import Any, Dict, Iterable, Iterator, Optional, Union
 from urllib.parse import parse_qs, urljoin, urlparse
 
 from airbyte_cdk.models import AirbyteLogMessage, AirbyteMessage, Type
@@ -27,6 +27,7 @@ from connector_builder.impl.low_code_cdk_adapter import LowCodeSourceAdapter
 
 class DefaultApiImpl(DefaultApi):
     logger = logging.getLogger("airbyte.connector-builder")
+    MAX_RECORD_LIMIT = 1000
 
     async def get_manifest_template(self) -> str:
         return """version: "0.1.0"
@@ -105,15 +106,22 @@ spec:
         Using the provided manifest and config, invokes a sync for the specified stream and returns groups of Airbyte messages
         that are produced during the read operation
         :param stream_read_request_body: Input parameters to trigger the read operation for a stream
+        :param limit: The maximum number of records requested by the client
         :return: Airbyte record messages produced by the sync grouped by slice and page
         """
         adapter = self._create_low_code_adapter(manifest=stream_read_request_body.manifest)
+
+        if stream_read_request_body.record_limit is None:
+            record_limit = self.MAX_RECORD_LIMIT
+        else:
+            record_limit = min(stream_read_request_body.record_limit, self.MAX_RECORD_LIMIT)
 
         single_slice = StreamReadSlices(pages=[])
         log_messages = []
         try:
             for message_group in self._get_message_groups(
-                    adapter.read_stream(stream_read_request_body.stream, stream_read_request_body.config)
+                    adapter.read_stream(stream_read_request_body.stream, stream_read_request_body.config),
+                    record_limit,
             ):
                 if isinstance(message_group, AirbyteLogMessage):
                     log_messages.append({"message": message_group.message})
@@ -125,11 +133,11 @@ spec:
 
         return StreamRead(logs=log_messages, slices=[single_slice])
 
-    def _get_message_groups(self, messages: Iterable[AirbyteMessage]) -> Iterable[Union[StreamReadPages, AirbyteLogMessage]]:
+    def _get_message_groups(self, messages: Iterator[AirbyteMessage], limit: int) -> Iterable[Union[StreamReadPages, AirbyteLogMessage]]:
         """
         Message groups are partitioned according to when request log messages are received. Subsequent response log messages
         and record messages belong to the prior request log message and when we encounter another request, append the latest
-        message group.
+        message group, until <limit> records have been read.
 
         Messages received from the CDK read operation will always arrive in the following order:
         {type: LOG, log: {message: "request: ..."}}
@@ -145,7 +153,8 @@ spec:
         current_records = []
         current_page_request: Optional[HttpRequest] = None
         current_page_response: Optional[HttpResponse] = None
-        for message in messages:
+
+        while len(current_records) < limit and (message := next(messages, None)):
             if first_page and message.type == Type.LOG and message.log.message.startswith("request:"):
                 first_page = False
                 request = self._create_request_from_log_message(message.log)

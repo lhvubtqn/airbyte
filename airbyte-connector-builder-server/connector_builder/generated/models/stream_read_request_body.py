@@ -20,11 +20,13 @@ class StreamReadRequestBody(BaseModel):
         stream: The stream of this StreamReadRequestBody.
         config: The config of this StreamReadRequestBody.
         state: The state of this StreamReadRequestBody [Optional].
+        record_limit: The record_limit of this StreamReadRequestBody [Optional].
     """
 
     manifest: Dict[str, Any]
     stream: str
     config: Dict[str, Any]
     state: Optional[Dict[str, Any]] = None
+    record_limit: Optional[int] = None
 
 StreamReadRequestBody.update_forward_refs()
