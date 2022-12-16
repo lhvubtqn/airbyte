@@ -278,7 +278,7 @@ def test_read_stream_with_logs():
 @pytest.mark.parametrize(
     "request_record_limit, max_record_limit",
     [
-        pytest.param(None, 3, id="test_create_request_no_record_limit"),
+        pytest.param(None, 2, id="test_create_request_no_record_limit"),
         pytest.param(None, 1, id="test_create_request_no_record_limit_n_records_exceed_max"),
         pytest.param(1, 3, id="test_create_request_with_record_limit"),
         pytest.param(3, 1, id="test_create_request_record_limit_exceeds_max"),
@@ -320,8 +320,10 @@ def test_read_stream_record_limit(request_record_limit, max_record_limit):
                 )
             )
             single_slice = actual_response.slices[0]
+            total_records = 0
             for i, actual_page in enumerate(single_slice.pages):
-                assert len(actual_page.records) == min([record_limit, n_records])
+                total_records += len(actual_page.records)
+            assert total_records == min([record_limit, n_records])
 
 
 def test_read_stream_limit_0():
