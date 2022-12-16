@@ -184,15 +184,17 @@ def test_read_stream():
     ]
 
     mock_source_adapter = MagicMock()
-    mock_source_adapter.read_stream.return_value = iter([
-        request_log_message(request),
-        response_log_message(response),
-        record_message("hashiras", {"name": "Shinobu Kocho"}),
-        record_message("hashiras", {"name": "Muichiro Tokito"}),
-        request_log_message(request),
-        response_log_message(response),
-        record_message("hashiras", {"name": "Mitsuri Kanroji"}),
-    ])
+    mock_source_adapter.read_stream.return_value = iter(
+        [
+            request_log_message(request),
+            response_log_message(response),
+            record_message("hashiras", {"name": "Shinobu Kocho"}),
+            record_message("hashiras", {"name": "Muichiro Tokito"}),
+            request_log_message(request),
+            response_log_message(response),
+            record_message("hashiras", {"name": "Mitsuri Kanroji"}),
+        ]
+    )
 
     with patch.object(DefaultApiImpl, "_create_low_code_adapter", return_value=mock_source_adapter):
         api = DefaultApiImpl()
@@ -245,15 +247,17 @@ def test_read_stream_with_logs():
     ]
 
     mock_source_adapter = MagicMock()
-    mock_source_adapter.read_stream.return_value = iter([
-        AirbyteMessage(type=Type.LOG, log=AirbyteLogMessage(level=Level.INFO, message="log message before the request")),
-        request_log_message(request),
-        response_log_message(response),
-        record_message("hashiras", {"name": "Shinobu Kocho"}),
-        AirbyteMessage(type=Type.LOG, log=AirbyteLogMessage(level=Level.INFO, message="log message during the page")),
-        record_message("hashiras", {"name": "Muichiro Tokito"}),
-        AirbyteMessage(type=Type.LOG, log=AirbyteLogMessage(level=Level.INFO, message="log message after the response")),
-    ])
+    mock_source_adapter.read_stream.return_value = iter(
+        [
+            AirbyteMessage(type=Type.LOG, log=AirbyteLogMessage(level=Level.INFO, message="log message before the request")),
+            request_log_message(request),
+            response_log_message(response),
+            record_message("hashiras", {"name": "Shinobu Kocho"}),
+            AirbyteMessage(type=Type.LOG, log=AirbyteLogMessage(level=Level.INFO, message="log message during the page")),
+            record_message("hashiras", {"name": "Muichiro Tokito"}),
+            AirbyteMessage(type=Type.LOG, log=AirbyteLogMessage(level=Level.INFO, message="log message after the response")),
+        ]
+    )
 
     with patch.object(DefaultApiImpl, "_create_low_code_adapter", return_value=mock_source_adapter):
         api = DefaultApiImpl()
@@ -288,16 +292,18 @@ def test_read_stream_record_limit(request_record_limit, max_record_limit):
     }
     response = {"status_code": 200, "headers": {"field": "value"}, "body": '{"name": "field"}'}
     mock_source_adapter = MagicMock()
-    mock_source_adapter.read_stream.return_value = iter([
-        request_log_message(request),
-        response_log_message(response),
-        record_message("hashiras", {"name": "Shinobu Kocho"}),
-        record_message("hashiras", {"name": "Muichiro Tokito"}),
-        request_log_message(request),
-        response_log_message(response),
-        record_message("hashiras", {"name": "Mitsuri Kanroji"}),
-        response_log_message(response),
-    ])
+    mock_source_adapter.read_stream.return_value = iter(
+        [
+            request_log_message(request),
+            response_log_message(response),
+            record_message("hashiras", {"name": "Shinobu Kocho"}),
+            record_message("hashiras", {"name": "Muichiro Tokito"}),
+            request_log_message(request),
+            response_log_message(response),
+            record_message("hashiras", {"name": "Mitsuri Kanroji"}),
+            response_log_message(response),
+        ]
+    )
     n_records = 2
     if request_record_limit is None:
         record_limit = max_record_limit
@@ -310,7 +316,8 @@ def test_read_stream_record_limit(request_record_limit, max_record_limit):
             loop = asyncio.get_event_loop()
             actual_response: StreamRead = loop.run_until_complete(
                 api.read_stream(
-                    StreamReadRequestBody(manifest=MANIFEST, config=CONFIG, stream="hashiras", record_limit=request_record_limit))
+                    StreamReadRequestBody(manifest=MANIFEST, config=CONFIG, stream="hashiras", record_limit=request_record_limit)
+                )
             )
             single_slice = actual_response.slices[0]
             for i, actual_page in enumerate(single_slice.pages):
@@ -325,16 +332,18 @@ def test_read_stream_limit_0():
     }
     response = {"status_code": 200, "headers": {"field": "value"}, "body": '{"name": "field"}'}
     mock_source_adapter = MagicMock()
-    mock_source_adapter.read_stream.return_value = iter([
-        request_log_message(request),
-        response_log_message(response),
-        record_message("hashiras", {"name": "Shinobu Kocho"}),
-        record_message("hashiras", {"name": "Muichiro Tokito"}),
-        request_log_message(request),
-        response_log_message(response),
-        record_message("hashiras", {"name": "Mitsuri Kanroji"}),
-        response_log_message(response),
-    ])
+    mock_source_adapter.read_stream.return_value = iter(
+        [
+            request_log_message(request),
+            response_log_message(response),
+            record_message("hashiras", {"name": "Shinobu Kocho"}),
+            record_message("hashiras", {"name": "Muichiro Tokito"}),
+            request_log_message(request),
+            response_log_message(response),
+            record_message("hashiras", {"name": "Mitsuri Kanroji"}),
+            response_log_message(response),
+        ]
+    )
     request_record_limit = 0
 
     with patch.object(DefaultApiImpl, "_create_low_code_adapter", return_value=mock_source_adapter):
@@ -344,7 +353,8 @@ def test_read_stream_limit_0():
 
             loop.run_until_complete(
                 api.read_stream(
-                    StreamReadRequestBody(manifest=MANIFEST, config=CONFIG, stream="hashiras", record_limit=request_record_limit))
+                    StreamReadRequestBody(manifest=MANIFEST, config=CONFIG, stream="hashiras", record_limit=request_record_limit)
+                )
             )
             loop.run_until_complete(api.read_stream(StreamReadRequestBody(manifest=MANIFEST, config=CONFIG, stream="hashiras")))
             assert actual_exception.value.status_code == 400
@@ -383,12 +393,14 @@ def test_read_stream_no_records():
     ]
 
     mock_source_adapter = MagicMock()
-    mock_source_adapter.read_stream.return_value = iter([
-        request_log_message(request),
-        response_log_message(response),
-        request_log_message(request),
-        response_log_message(response),
-    ])
+    mock_source_adapter.read_stream.return_value = iter(
+        [
+            request_log_message(request),
+            response_log_message(response),
+            request_log_message(request),
+            response_log_message(response),
+        ]
+    )
 
     with patch.object(DefaultApiImpl, "_create_low_code_adapter", return_value=mock_source_adapter):
         api = DefaultApiImpl()
@@ -440,11 +452,13 @@ def test_read_stream_invalid_group_format():
     response = {"status_code": 200, "headers": {"field": "value"}, "body": '{"name": "field"}'}
 
     mock_source_adapter = MagicMock()
-    mock_source_adapter.read_stream.return_value = iter([
-        response_log_message(response),
-        record_message("hashiras", {"name": "Shinobu Kocho"}),
-        record_message("hashiras", {"name": "Muichiro Tokito"}),
-    ])
+    mock_source_adapter.read_stream.return_value = iter(
+        [
+            response_log_message(response),
+            record_message("hashiras", {"name": "Shinobu Kocho"}),
+            record_message("hashiras", {"name": "Muichiro Tokito"}),
+        ]
+    )
 
     with patch.object(DefaultApiImpl, "_create_low_code_adapter", return_value=mock_source_adapter):
         api = DefaultApiImpl()
@@ -473,15 +487,19 @@ def test_read_stream_returns_error_if_stream_does_not_exist():
         pytest.param(
             'request:{"url": "https://nichirin.com/v1/swords?color=orange", "http_method": "PUT", "headers": {"field": "name"}, "body":{"key": "value"}}',
             HttpRequest(
-                url="https://nichirin.com/v1/swords", parameters={"color": ["orange"]}, headers={"field": "name"}, body={"key": "value"},
+                url="https://nichirin.com/v1/swords",
+                parameters={"color": ["orange"]},
+                headers={"field": "name"},
+                body={"key": "value"},
                 http_method="PUT",
             ),
             id="test_create_request_with_all_fields",
         ),
         pytest.param(
             'request:{"url": "https://nichirin.com/v1/swords?color=orange", "http_method": "GET", "headers": {"field": "name"}}',
-            HttpRequest(url="https://nichirin.com/v1/swords", parameters={"color": ["orange"]}, headers={"field": "name"},
-                        http_method="GET"),
+            HttpRequest(
+                url="https://nichirin.com/v1/swords", parameters={"color": ["orange"]}, headers={"field": "name"}, http_method="GET"
+            ),
             id="test_create_request_with_no_body",
         ),
         pytest.param(
