@@ -310,20 +310,17 @@ def test_read_stream_record_limit(request_record_limit, max_record_limit):
     else:
         record_limit = min(request_record_limit, max_record_limit)
 
-    with patch.object(DefaultApiImpl, "MAX_RECORD_LIMIT", max_record_limit):
-        with patch.object(DefaultApiImpl, "_create_low_code_adapter", return_value=mock_source_adapter):
-            api = DefaultApiImpl()
-            loop = asyncio.get_event_loop()
-            actual_response: StreamRead = loop.run_until_complete(
-                api.read_stream(
-                    StreamReadRequestBody(manifest=MANIFEST, config=CONFIG, stream="hashiras", record_limit=request_record_limit)
-                )
-            )
-            single_slice = actual_response.slices[0]
-            total_records = 0
-            for i, actual_page in enumerate(single_slice.pages):
-                total_records += len(actual_page.records)
-            assert total_records == min([record_limit, n_records])
+    with patch.object(DefaultApiImpl, "_create_low_code_adapter", return_value=mock_source_adapter):
+        api = DefaultApiImpl(max_record_limit=max_record_limit)
+        loop = asyncio.get_event_loop()
+        actual_response: StreamRead = loop.run_until_complete(
+            api.read_stream(StreamReadRequestBody(manifest=MANIFEST, config=CONFIG, stream="hashiras", record_limit=request_record_limit))
+        )
+        single_slice = actual_response.slices[0]
+        total_records = 0
+        for i, actual_page in enumerate(single_slice.pages):
+            total_records += len(actual_page.records)
+        assert total_records == min([record_limit, n_records])
 
 
 def test_read_stream_limit_0():

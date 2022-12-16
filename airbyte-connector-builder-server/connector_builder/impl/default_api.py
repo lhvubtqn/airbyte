@@ -26,7 +26,10 @@ from jsonschema import ValidationError
 
 class DefaultApiImpl(DefaultApi):
     logger = logging.getLogger("airbyte.connector-builder")
-    MAX_RECORD_LIMIT = 1000
+
+    def __init__(self, max_record_limit: int = 1000):
+        self.max_record_limit = max_record_limit
+        super().__init__()
 
     async def get_manifest_template(self) -> str:
         return """version: "0.1.0"
@@ -111,9 +114,9 @@ spec:
         adapter = self._create_low_code_adapter(manifest=stream_read_request_body.manifest)
 
         if stream_read_request_body.record_limit is None:
-            record_limit = self.MAX_RECORD_LIMIT
+            record_limit = self.max_record_limit
         else:
-            record_limit = min(stream_read_request_body.record_limit, self.MAX_RECORD_LIMIT)
+            record_limit = min(stream_read_request_body.record_limit, self.max_record_limit)
 
         single_slice = StreamReadSlices(pages=[])
         log_messages = []
