@@ -29,4 +29,14 @@ class StreamReadRequestBody(BaseModel):
     state: Optional[Dict[str, Any]] = None
     record_limit: Optional[int] = None
 
+    @validator("record_limit")
+    def record_limit_max(cls, value):
+        assert value <= 1000
+        return value
+
+    @validator("record_limit")
+    def record_limit_min(cls, value):
+        assert value >= 1
+        return value
+
 StreamReadRequestBody.update_forward_refs()
