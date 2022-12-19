@@ -77,6 +77,14 @@ public class ConfigFetchActivityImpl implements ConfigFetchActivity {
 
   @Trace(operationName = ACTIVITY_TRACE_OPERATION_NAME)
   @Override
+  public ConnectionRead getConnection(final UUID connectionId) throws ApiException {
+    final io.airbyte.api.client.model.generated.ConnectionIdRequestBody requestBody =
+        new io.airbyte.api.client.model.generated.ConnectionIdRequestBody().connectionId(connectionId);
+    return connectionApi.getConnection(requestBody);
+  }
+
+  @Trace(operationName = ACTIVITY_TRACE_OPERATION_NAME)
+  @Override
   public ScheduleRetrieverOutput getTimeToWait(final ScheduleRetrieverInput input) {
     try {
       ApmTraceUtils.addTagsToTrace(Map.of(CONNECTION_ID_KEY, input.getConnectionId()));
@@ -186,9 +194,7 @@ public class ConfigFetchActivityImpl implements ConfigFetchActivity {
   @Override
   public Optional<UUID> getSourceId(final UUID connectionId) {
     try {
-      final io.airbyte.api.client.model.generated.ConnectionIdRequestBody requestBody =
-          new io.airbyte.api.client.model.generated.ConnectionIdRequestBody().connectionId(connectionId);
-      final ConnectionRead connectionRead = connectionApi.getConnection(requestBody);
+      final ConnectionRead connectionRead = getConnection(connectionId);
       return Optional.ofNullable(connectionRead.getSourceId());
     } catch (ApiException e) {
       log.info("Encountered an error fetching the connection's Source ID: ", e);
@@ -199,9 +205,7 @@ public class ConfigFetchActivityImpl implements ConfigFetchActivity {
   @Override
   public Optional<Status> getStatus(final UUID connectionId) {
     try {
-      final io.airbyte.api.client.model.generated.ConnectionIdRequestBody requestBody =
-          new io.airbyte.api.client.model.generated.ConnectionIdRequestBody().connectionId(connectionId);
-      final ConnectionRead connectionRead = connectionApi.getConnection(requestBody);
+      final ConnectionRead connectionRead = getConnection(connectionId);
       final Status standardSyncStatus = Enums.convertTo(connectionRead.getStatus(), StandardSync.Status.class);
       return Optional.ofNullable(standardSyncStatus);
     } catch (ApiException e) {
