@@ -109,7 +109,7 @@ spec:
         Using the provided manifest and config, invokes a sync for the specified stream and returns groups of Airbyte messages
         that are produced during the read operation
         :param stream_read_request_body: Input parameters to trigger the read operation for a stream
-        :param limit: The maximum number of records requested by the client
+        :param limit: The maximum number of records requested by the client (must be within the range [1, self.max_record_limit])
         :return: Airbyte record messages produced by the sync grouped by slice and page
         """
         adapter = self._create_low_code_adapter(manifest=stream_read_request_body.manifest)
