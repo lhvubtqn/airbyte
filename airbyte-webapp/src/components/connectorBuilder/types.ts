@@ -15,6 +15,7 @@ import {
   SessionTokenAuthenticator,
   DefaultPaginatorAllOfPaginationStrategy,
   RequestOption,
+  SimpleRetrieverAllOfStreamSlicer,
 } from "core/request/ConnectorManifest";
 
 export interface BuilderFormInput {
@@ -62,6 +63,7 @@ export interface BuilderStream {
     pageSizeOption: RequestOption;
     pageTokenOption: RequestOption;
   };
+  streamSlicer?: SimpleRetrieverAllOfStreamSlicer;
 }
 
 export const DEFAULT_BUILDER_FORM_VALUES: BuilderFormValues = {
@@ -317,6 +319,7 @@ export const builderFormValidationSchema = yup.object().shape({
         })
         .notRequired()
         .default(undefined),
+      streamSlicer: yup.object().notRequired().default(undefined),
     })
   ),
 });
